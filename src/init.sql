@@ -1,5 +1,5 @@
 -- ─────────────────────────────────────────────────────────────────────────────
---  GasBook  |  init.sql
+--  Gas Booking System  |  init.sql
 --  Auto-executed by MySQL Docker container on first start
 --  Creates schema + seed data for gasbook database
 -- ─────────────────────────────────────────────────────────────────────────────
