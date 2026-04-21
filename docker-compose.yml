@@ -1,0 +1,69 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  GasBook  |  docker-compose.yml
+#  Services: app (Flask) + db (MySQL 8)
+#  External access: http://localhost:5002
+# ─────────────────────────────────────────────────────────────────────────────
+
+version: "3.9"
+
+services:
+
+  # ── MySQL Database ─────────────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: gasbook_db
+    restart: unless-stopped
+    # FIX: hardcode MySQL env vars directly — env_file values are NOT available
+    #      for ${VAR} interpolation in the same compose file (host-shell only).
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE:      gasbook
+      MYSQL_USER:          gasbook_user
+      MYSQL_PASSWORD:      gasbook_pass
+    volumes:
+      - gasbook_mysql_data:/var/lib/mysql
+      - ./src/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "3306:3306"   # FIX: host 3306 → container 3306 (MySQL always listens on 3306 internally)
+    networks:
+      - gasbook_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ── Flask Application ──────────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gasbook_app
+    restart: unless-stopped
+    env_file:
+      - config.env
+    environment:
+      MYSQL_HOST:     db           # internal Docker network hostname
+      MYSQL_PORT:     "3306"       # always 3306 inside Docker network
+      FLASK_PORT:     "5002"
+    ports:
+      - "5002:5002"   # external port 5002 → internal 5002
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - gasbook_net
+    volumes:
+      - .:/app
+    command: python app.py
+
+# ── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  gasbook_mysql_data:
+    driver: local
+
+# ── Networks ──────────────────────────────────────────────────────────────────
+networks:
+  gasbook_net:
+    driver: bridge

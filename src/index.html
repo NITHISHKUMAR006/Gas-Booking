@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GasBook — Login</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 38 38'%3E%3Crect x='13.5' y='3' width='11' height='3' rx='1.5' fill='%23ff6b2b'/%3E%3Crect x='15.5' y='6' width='7' height='2' rx='1' fill='%23ff9a3c'/%3E%3Cellipse cx='19' cy='8' rx='10' ry='3.5' fill='%23ff6b2b' opacity='0.8'/%3E%3Crect x='9' y='8' width='20' height='22' rx='10' fill='%23ff6b2b' opacity='0.5'/%3E%3Cellipse cx='19' cy='30' rx='10' ry='3.5' fill='%23ff6b2b' opacity='0.6'/%3E%3Cpath d='M14 19 Q16 14 19 19 Q22 24 24 19' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+<meta property="og:title" content="GasBook — LPG Management">
+<meta property="og:description" content="LPG Cylinder Booking Management System">
+<meta property="og:image" content="https://placehold.co/1200x630/0d0f14/ff6b2b?text=GasBook">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Theme Tokens ─────────────────────────────────────────── */
+:root {
+  --flame: #ff6b2b; --flame2: #ff9a3c; --flame3: #ffbe7d;
+  --trans: 0.35s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"] {
+  --bg: #0d0f14; --surface: #111520; --card: #161a24;
+  --border: #232840; --text: #eef0f8; --muted: #6b7499;
+  --input-bg: rgba(255,255,255,0.04); --input-focus: rgba(255,107,43,0.06);
+  --shadow: rgba(0,0,0,0.5); --glow: rgba(255,107,43,0.35);
+  --toggle-bg: #232840; --toggle-ico: "☀️";
+}
+[data-theme="light"] {
+  --bg: #f0f2f8; --surface: #ffffff; --card: #ffffff;
+  --border: #dde1f0; --text: #1a1d2e; --muted: #7b82a3;
+  --input-bg: rgba(0,0,0,0.03); --input-focus: rgba(255,107,43,0.05);
+  --shadow: rgba(100,110,160,0.15); --glow: rgba(255,107,43,0.2);
+  --toggle-bg: #e4e7f5; --toggle-ico: "🌙";
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  transition: background var(--trans), color var(--trans);
+  color: var(--text);
+}
+
+/* ── Background grid ────────────────────────────────────────── */
+.bg-grid {
+  position: fixed; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,107,43,0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,107,43,0.045) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: gridShift 25s linear infinite;
+  transition: opacity var(--trans);
+}
+[data-theme="light"] .bg-grid { opacity: 0.5; }
+@keyframes gridShift { to { background-position: 48px 48px; } }
+
+/* ── Orbs ────────────────────────────────────────────────────── */
+.orb {
+  position: fixed; border-radius: 50%; pointer-events: none;
+  filter: blur(90px); animation: orbFloat 9s ease-in-out infinite;
+}
+.orb1 { width:450px; height:450px; background:rgba(255,107,43,0.10); top:-130px; right:-100px; }
+.orb2 { width:320px; height:320px; background:rgba(255,154,60,0.08); bottom:-100px; left:-90px; animation-delay:-4.5s; }
+[data-theme="light"] .orb1 { background:rgba(255,107,43,0.07); }
+[data-theme="light"] .orb2 { background:rgba(255,154,60,0.05); }
+@keyframes orbFloat { 0%,100%{transform:translate(0,0);} 50%{transform:translate(22px,-22px);} }
+
+/* ── Particles ────────────────────────────────────────────────── */
+.particles { position:fixed; inset:0; overflow:hidden; pointer-events:none; }
+.particle {
+  position: absolute; border-radius: 50%;
+  background: var(--flame); opacity: 0;
+  animation: rise linear infinite;
+}
+[data-theme="light"] .particle { background: var(--flame); opacity: 0; }
+@keyframes rise {
+  0%   { transform:translateY(100vh) scale(0); opacity:0; }
+  10%  { opacity: 0.5; }
+  90%  { opacity: 0.15; }
+  100% { transform:translateY(-10vh) scale(1); opacity:0; }
+}
+
+/* ── Theme Toggle ─────────────────────────────────────────────── */
+.theme-toggle {
+  position: fixed; top: 18px; right: 18px; z-index: 100;
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--toggle-bg); border: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 18px; transition: all var(--trans);
+  box-shadow: 0 2px 12px var(--shadow);
+}
+.theme-toggle:hover { transform: scale(1.1) rotate(15deg); border-color: var(--flame); }
+
+/* ── Card ────────────────────────────────────────────────────── */
+/* Hide all scrollbars site-wide */
+html, body { scrollbar-width: none; }
+html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
+
+.card {
+  position: relative; z-index: 10;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 44px 40px 40px;
+  width: 100%; max-width: 430px;
+  max-height: 92vh; overflow-y: auto; scrollbar-width: none;
+  box-shadow: 0 0 0 1px rgba(255,107,43,0.07), 0 40px 80px var(--shadow);
+  transition: background var(--trans), border-color var(--trans), box-shadow var(--trans);
+  animation: cardIn 0.65s cubic-bezier(0.16,1,0.3,1) forwards;
+  opacity: 0; transform: translateY(28px);
+}
+.card::-webkit-scrollbar { display: none; }
+@keyframes cardIn { to { opacity:1; transform:translateY(0); } }
+
+/* ── Logo ─────────────────────────────────────────────────────── */
+.logo { text-align: center; margin-bottom: 36px; }
+.logo-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 68px; height: 68px; border-radius: 20px; margin-bottom: 16px;
+  background: linear-gradient(135deg, var(--flame), var(--flame2));
+  box-shadow: 0 0 36px var(--glow);
+  animation: logoPulse 2.8s ease-in-out infinite;
+}
+@keyframes logoPulse {
+  0%,100% { box-shadow: 0 0 30px var(--glow); }
+  50%      { box-shadow: 0 0 55px var(--glow), 0 0 80px rgba(255,107,43,0.15); }
+}
+.logo h1 {
+  font-family: 'Outfit', sans-serif; font-size: 28px; font-weight: 700;
+  background: linear-gradient(135deg, var(--text) 30%, var(--flame2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  letter-spacing: -0.02em;
+}
+.logo p { font-size: 13px; color: var(--muted); margin-top: 5px; }
+
+/* ── Form ─────────────────────────────────────────────────────── */
+.form-group { margin-bottom: 18px; }
+.form-group label {
+  display: block; font-size: 11px; font-weight: 600;
+  color: var(--muted); text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 8px;
+}
+.input-wrap { position: relative; }
+.input-wrap .ico {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  font-size: 15px; opacity: 0.4; pointer-events: none; transition: opacity 0.2s;
+}
+.input-wrap input {
+  width: 100%; padding: 13px 14px 13px 44px;
+  background: var(--input-bg); border: 1px solid var(--border);
+  border-radius: 12px; color: var(--text);
+  font-family: 'Inter', sans-serif; font-size: 14px;
+  outline: none; transition: all 0.25s;
+}
+.input-wrap input:focus {
+  border-color: var(--flame); background: var(--input-focus);
+  box-shadow: 0 0 0 3px rgba(255,107,43,0.14);
+}
+.input-wrap input:focus ~ .ico,
+.input-wrap:focus-within .ico { opacity: 0.9; }
+
+/* ── Password eye ─────────────────────────────────────────────── */
+.eye-btn {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; color: var(--muted);
+  font-size: 15px; padding: 4px; transition: color 0.2s;
+}
+.eye-btn:hover { color: var(--flame); }
+
+/* ── Submit ───────────────────────────────────────────────────── */
+.btn-login {
+  width: 100%; padding: 14px; margin-top: 8px;
+  background: linear-gradient(135deg, var(--flame), var(--flame2));
+  border: none; border-radius: 12px;
+  color: #fff; font-family: 'Outfit', sans-serif;
+  font-size: 15px; font-weight: 700; letter-spacing: 0.03em;
+  cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden;
+}
+.btn-login::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.18), transparent);
+  opacity: 0; transition: opacity 0.25s;
+}
+.btn-login:hover::after { opacity: 1; }
+.btn-login:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(255,107,43,0.42); }
+.btn-login:active { transform: translateY(0); }
+.btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+/* ── Spinner ──────────────────────────────────────────────────── */
+.spinner {
+  display: inline-block; width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+  border-radius: 50%; animation: spin 0.7s linear infinite;
+  vertical-align: middle; margin-right: 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Message ──────────────────────────────────────────────────── */
+#message { min-height: 24px; margin-top: 14px; text-align: center; font-size: 13px; }
+.msg-error   { color: #ef4444; }
+.msg-success { color: #22c55e; }
+
+/* ── Quick creds ──────────────────────────────────────────────── */
+.demo {
+  margin-top: 24px; padding-top: 20px;
+  border-top: 1px solid var(--border);
+  transition: border-color var(--trans);
+}
+.demo-title {
+  font-size: 11px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px;
+  text-align: center;
+}
+.cred-row { display: flex; gap: 8px; }
+.cred-btn {
+  flex: 1; padding: 9px 8px;
+  background: var(--input-bg); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-size: 12px;
+  cursor: pointer; transition: all 0.2s; text-align: center;
+  font-family: 'Inter', sans-serif;
+}
+.cred-btn span { display: block; color: var(--flame); font-weight: 700; font-size: 10px; margin-bottom: 2px; letter-spacing: 0.06em; }
+.cred-btn:hover { border-color: var(--flame); color: var(--text); background: rgba(255,107,43,0.07); }
+
+/* ── Auth Tabs ────────────────────────────────────────── */
+.auth-tabs {
+  display: flex; gap: 0; margin-bottom: 28px;
+  background: var(--input-bg); border-radius: 12px; padding: 4px;
+  border: 1px solid var(--border);
+}
+.auth-tab {
+  flex: 1; padding: 9px 0; text-align: center;
+  font-size: 13px; font-weight: 600; font-family: 'Outfit', sans-serif;
+  border-radius: 9px; cursor: pointer; transition: all 0.22s;
+  color: var(--muted); border: none; background: none;
+}
+.auth-tab.active {
+  background: linear-gradient(135deg, var(--flame), var(--flame2));
+  color: #fff; box-shadow: 0 4px 16px rgba(255,107,43,0.35);
+}
+.field-err-s { font-size: 11px; color: #ef4444; padding: 3px 0 0; display: none; }
+.field-err-s.show { display: block; }
+
+/* ── Password strength bar ──────────────────────────────── */
+.pwd-strength-wrap { margin-top: 8px; }
+.pwd-strength-bar {
+  height: 4px; border-radius: 99px;
+  background: var(--border); overflow: hidden; margin-bottom: 4px;
+}
+.pwd-strength-fill {
+  height: 100%; border-radius: 99px; width: 0;
+  transition: width 0.35s ease, background 0.35s ease;
+}
+.pwd-strength-label {
+  font-size: 11px; font-weight: 600;
+  color: var(--muted); letter-spacing: 0.04em;
+  display: flex; justify-content: space-between;
+}
+.pwd-hint {
+  font-size: 11px; color: var(--muted); margin-top: 4px;
+  display: flex; gap: 12px; flex-wrap: wrap;
+}
+.pwd-hint span { display: flex; align-items: center; gap: 3px; }
+.pwd-hint .ok  { color: #22c55e; }
+.pwd-hint .bad { color: var(--muted); }
+/* card scrollable when signup is long */
+.card { max-height: 96vh; overflow-y: auto; }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="particles" id="particles"></div>
+
+<!-- Theme Toggle -->
+<button class="theme-toggle" id="themeToggle" title="Toggle theme" onclick="toggleTheme()">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffb703" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5" fill="#ffb703" fill-opacity="0.3"/><path d="M12 1v2"/><path d="M12 21v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M1 12h2"/><path d="M21 12h2"/><path d="M4.22 19.78l1.42-1.42"/><path d="M18.36 5.64l1.42-1.42"/></svg>
+</button>
+
+<div class="card">
+  <div class="logo">
+    <!-- Gas Cylinder Logo — switches with theme -->
+    <div class="logo-icon">
+      <!-- Dark mode: white-filled flame paths -->
+      <svg id="logo-svg" width="38" height="38" viewBox="0 0 38 38" fill="none">
+        <!-- valve top -->
+        <rect x="13.5" y="3" width="11" height="3" rx="1.5" fill="rgba(255,255,255,0.9)"/>
+        <rect x="15.5" y="6" width="7" height="2" rx="1" fill="rgba(255,255,255,0.7)"/>
+        <!-- body -->
+        <ellipse cx="19" cy="8" rx="10" ry="3.5" fill="rgba(255,255,255,0.35)"/>
+        <rect x="9" y="8" width="20" height="22" rx="10" fill="rgba(255,255,255,0.13)"/>
+        <ellipse cx="19" cy="30" rx="10" ry="3.5" fill="rgba(255,255,255,0.2)"/>
+        <!-- flame symbol -->
+        <path d="M14 19 Q16 14 19 19 Q22 24 24 19" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" fill="none"/>
+      </svg>
+    </div>
+    <h1>GasBook</h1>
+    <p>LPG Cylinder Booking Management System</p>
+  </div>
+
+  <!-- Auth Tabs -->
+  <div class="auth-tabs">
+    <button class="auth-tab active" id="tab-signin" onclick="switchTab('signin')">Sign In</button>
+    <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Sign Up</button>
+  </div>
+
+  <!-- SIGN IN -->
+  <div id="panel-signin">
+    <form id="loginForm" autocomplete="off">
+      <div class="form-group">
+        <label>Username / Email</label>
+        <div class="input-wrap">
+          <input type="text" id="username" placeholder="Enter username or email" required autocomplete="username">
+          <span class="ico">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          </span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
+          <span class="ico">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <button type="button" class="eye-btn" id="eyeBtn" onclick="togglePwd()" title="Show/hide password">
+            <svg id="eyeIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <button type="submit" class="btn-login" id="loginBtn">Sign In</button>
+      <div id="message"></div>
+    </form>
+
+    <div class="demo">
+      <div class="demo-title">Quick Access</div>
+      <div class="cred-row">
+        <button class="cred-btn" onclick="fillCreds('admin','admin123')">
+          <span>ADMIN</span>admin / admin123
+        </button>
+        <button class="cred-btn" onclick="fillCreds('staff','staff123')">
+          <span>STAFF</span>staff / staff123
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIGN UP -->
+  <div id="panel-signup" style="display:none;">
+    <form id="signupForm" autocomplete="off">
+
+      <!-- Full Name -->
+      <div class="form-group">
+        <label>Full Name *</label>
+        <div class="input-wrap">
+          <input type="text" id="s-name" placeholder="Ramkumar Murugesan" required autocomplete="name" maxlength="80">
+          <span class="ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>
+        </div>
+        <div class="field-err-s" id="serr-name">Only alphabets and spaces allowed</div>
+      </div>
+
+      <!-- Username -->
+      <div class="form-group">
+        <label>Username *</label>
+        <div class="input-wrap">
+          <input type="text" id="s-username" placeholder="Choose a username" required autocomplete="off" maxlength="50">
+          <span class="ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="12" y2="13"/></svg></span>
+        </div>
+        <div class="field-err-s" id="serr-username">Username must be 3–20 characters (letters, numbers, _)</div>
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label>Email *</label>
+        <div class="input-wrap">
+          <input type="email" id="s-email" placeholder="you@example.com" required autocomplete="email">
+          <span class="ico">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </span>
+        </div>
+        <div class="field-err-s" id="serr-email">Enter a valid email address (e.g. name@domain.com)</div>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label>Password * <span style="font-size:10px;font-weight:400;color:var(--muted)">(min 8 chars)</span></label>
+        <div class="input-wrap">
+          <input type="password" id="s-password" placeholder="Create a password" required autocomplete="new-password" minlength="8">
+          <span class="ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+          <button type="button" class="eye-btn" id="s-eyeBtn" onclick="toggleSignupPwd()" title="Show/hide password">
+            <svg id="s-eyeIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <!-- Strength bar -->
+        <div class="pwd-strength-wrap" id="pwd-strength-wrap" style="display:none;">
+          <div class="pwd-strength-bar"><div class="pwd-strength-fill" id="pwd-fill"></div></div>
+          <div class="pwd-strength-label"><span id="pwd-label">Strength</span></div>
+          <div class="pwd-hint">
+            <span id="ph-len">✗ 8+ chars</span>
+            <span id="ph-upper">✗ Uppercase</span>
+            <span id="ph-num">✗ Number</span>
+            <span id="ph-sym">✗ Symbol</span>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-login" id="signupBtn">Create Account</button>
+      <div id="signup-message"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+// ── Dynamic API — works on any host/port ──────────────────────
+const API = window.location.origin + '/api';
+
+// ── Theme ─────────────────────────────────────────────────────
+const iconSun = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffb703" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5" fill="#ffb703" fill-opacity="0.3"/><path d="M12 1v2"/><path d="M12 21v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M1 12h2"/><path d="M21 12h2"/><path d="M4.22 19.78l1.42-1.42"/><path d="M18.36 5.64l1.42-1.42"/></svg>`;
+const iconMoon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4cc9f0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="#4cc9f0" fill-opacity="0.2"/></svg>`;
+
+function toggleTheme() {
+  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  document.getElementById('themeToggle').innerHTML = next === 'dark' ? iconSun : iconMoon;
+  localStorage.setItem('gasbook_theme', next);
+}
+(function initTheme() {
+  const saved = localStorage.getItem('gasbook_theme') || 'dark';
+  document.documentElement.dataset.theme = saved;
+  document.getElementById('themeToggle').innerHTML = saved === 'dark' ? iconSun : iconMoon;
+})();
+
+// ── Password toggle ────────────────────────────────────────────
+function togglePwd() {
+  const inp = document.getElementById('password');
+  const showing = inp.type === 'text';
+  inp.type = showing ? 'password' : 'text';
+  document.getElementById('eyeIcon').innerHTML = showing
+    ? '<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/>'
+    : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+}
+
+// ── Particles ─────────────────────────────────────────────────
+(function spawnParticles() {
+  const c = document.getElementById('particles');
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.cssText = `
+      left:${Math.random()*100}%;
+      width:${2+Math.random()*4}px; height:${2+Math.random()*4}px;
+      animation-duration:${7+Math.random()*10}s;
+      animation-delay:${-Math.random()*15}s;
+    `;
+    c.appendChild(p);
+  }
+})();
+
+// ── Quick fill ────────────────────────────────────────────────
+function fillCreds(u, p) {
+  document.getElementById('username').value = u;
+  document.getElementById('password').value = p;
+  document.getElementById('loginBtn').focus();
+}
+
+// ── Login ─────────────────────────────────────────────────────
+document.getElementById('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const u   = document.getElementById('username').value.trim();
+  const p   = document.getElementById('password').value.trim();
+  const msg = document.getElementById('message');
+  const btn = document.getElementById('loginBtn');
+  msg.innerHTML = '';
+
+  if (!u || !p) {
+    msg.innerHTML = '<span class="msg-error">✗ Please fill in all fields</span>';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Signing in…';
+
+  try {
+    const res  = await fetch(`${API}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ username: u, password: p })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      msg.innerHTML = '<span class="msg-success">✓ Login successful! Redirecting…</span>';
+      localStorage.setItem('gasbook_user', JSON.stringify({
+        username: data.username, role: data.role, user_id: data.user_id
+      }));
+      setTimeout(() => { window.location.href = '/dashboard'; }, 900);
+    } else {
+      msg.innerHTML = `<span class="msg-error">✗ ${data.message || 'Invalid credentials'}</span>`;
+      btn.disabled = false;
+      btn.innerHTML = 'Sign In';
+      document.getElementById('password').value = '';
+    }
+  } catch (err) {
+    msg.innerHTML = '<span class="msg-error">✗ Cannot reach server. Is Docker running?</span>';
+    btn.disabled = false;
+    btn.innerHTML = 'Sign In';
+    console.error('Login error:', err);
+  }
+});
+
+// ── Tab Switcher ──────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('panel-signin').style.display = tab === 'signin' ? '' : 'none';
+  document.getElementById('panel-signup').style.display = tab === 'signup' ? '' : 'none';
+  document.getElementById('tab-signin').classList.toggle('active', tab === 'signin');
+  document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+  document.getElementById('message').innerHTML = '';
+  document.getElementById('signup-message').innerHTML = '';
+}
+
+// ── Signup live validation ────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+
+  // Full Name: alphabets + spaces only; auto title-case
+  document.getElementById('s-name').addEventListener('input', function() {
+    // Strip non-alpha/space characters
+    let v = this.value.replace(/[^a-zA-Z\s]/g, '');
+    // Title-case: capitalise first letter of each word in real time
+    v = v.replace(/\b([a-zA-Z])/g, ch => ch.toUpperCase());
+    this.value = v;
+    const ok = /^[A-Za-z][A-Za-z\s]{1,}$/.test(v.trim());
+    document.getElementById('serr-name').classList.toggle('show', v.length > 0 && !ok);
+  });
+
+  // Username: 3-20 chars, letters/numbers/_
+  document.getElementById('s-username').addEventListener('input', function() {
+    // Remove invalid chars as they type
+    this.value = this.value.replace(/[^a-zA-Z0-9_]/g, '');
+    const ok = /^[a-zA-Z0-9_]{3,20}$/.test(this.value);
+    document.getElementById('serr-username').classList.toggle('show', this.value.length > 0 && !ok);
+  });
+
+  // Email: strict RFC-like regex
+  document.getElementById('s-email').addEventListener('input', function() {
+    const ok = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(this.value);
+    document.getElementById('serr-email').classList.toggle('show', this.value.length > 0 && !ok);
+  });
+
+  // Password: live strength meter
+  document.getElementById('s-password').addEventListener('input', function() {
+    const v = this.value;
+    const wrap  = document.getElementById('pwd-strength-wrap');
+    const fill  = document.getElementById('pwd-fill');
+    const label = document.getElementById('pwd-label');
+
+    if (v.length === 0) { wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+
+    const hasLen   = v.length >= 8;
+    const hasUpper = /[A-Z]/.test(v);
+    const hasNum   = /[0-9]/.test(v);
+    const hasSym   = /[^a-zA-Z0-9]/.test(v);
+
+    _setPwdHint('ph-len',   hasLen,   hasLen   ? '✓ 8+ chars'  : '✗ 8+ chars');
+    _setPwdHint('ph-upper', hasUpper, hasUpper ? '✓ Uppercase' : '✗ Uppercase');
+    _setPwdHint('ph-num',   hasNum,   hasNum   ? '✓ Number'    : '✗ Number');
+    _setPwdHint('ph-sym',   hasSym,   hasSym   ? '✓ Symbol'    : '✗ Symbol');
+
+    const score = [hasLen, hasUpper, hasNum, hasSym].filter(Boolean).length;
+    const levels = [
+      { pct: '25%',  color: '#ef4444', text: 'Weak'       },
+      { pct: '50%',  color: '#f97316', text: 'Fair'       },
+      { pct: '75%',  color: '#eab308', text: 'Strong'     },
+      { pct: '100%', color: '#22c55e', text: 'Very Strong' },
+    ];
+    const lvl = levels[score - 1] || levels[0];
+    fill.style.width      = lvl.pct;
+    fill.style.background = lvl.color;
+    label.textContent     = lvl.text;
+    label.style.color     = lvl.color;
+  });
+
+  function _setPwdHint(id, ok, text) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className   = ok ? 'ok' : 'bad';
+  }
+});
+
+// ── Toggle signup password visibility ────────────────────────
+function toggleSignupPwd() {
+  const inp = document.getElementById('s-password');
+  const showing = inp.type === 'text';
+  inp.type = showing ? 'password' : 'text';
+  document.getElementById('s-eyeIcon').innerHTML = showing
+    ? '<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/>'
+    : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+}
+
+// ── Signup Submit ─────────────────────────────────────────────
+document.getElementById('signupForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const name  = document.getElementById('s-name').value.trim();
+  const uname = document.getElementById('s-username').value.trim();
+  const email = document.getElementById('s-email').value.trim();
+  const pwd   = document.getElementById('s-password').value;
+  const msg   = document.getElementById('signup-message');
+  const btn   = document.getElementById('signupBtn');
+
+  // ── Validate ──────────────────────────────────────────────
+  if (!name) {
+    msg.innerHTML = '<span class="msg-error">✗ Full name is required</span>'; return;
+  }
+  if (!/^[A-Za-z][A-Za-z\s]{1,}$/.test(name)) {
+    msg.innerHTML = '<span class="msg-error">✗ Name must contain alphabets only</span>'; return;
+  }
+  if (!uname || !/^[a-zA-Z0-9_]{3,20}$/.test(uname)) {
+    msg.innerHTML = '<span class="msg-error">✗ Username must be 3–20 characters (letters, numbers, _)</span>'; return;
+  }
+  if (!email || !/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(email)) {
+    msg.innerHTML = '<span class="msg-error">✗ Enter a valid email address</span>'; return;
+  }
+  if (pwd.length < 8) {
+    msg.innerHTML = '<span class="msg-error">✗ Password must be at least 8 characters</span>'; return;
+  }
+
+  // ── Submit ────────────────────────────────────────────────
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Creating Account…';
+  try {
+    const res  = await fetch(`${API}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ full_name: name, username: uname, email, password: pwd })
+    });
+    const data = await res.json();
+    if (data.success) {
+      msg.innerHTML = '<span class="msg-success">✓ Account created! You can now sign in.</span>';
+      setTimeout(() => {
+        document.getElementById('username').value = uname;
+        document.getElementById('password').value = pwd;
+        switchTab('signin');
+        document.getElementById('signup-message').innerHTML = '';
+      }, 1500);
+    } else {
+      msg.innerHTML = `<span class="msg-error">✗ ${data.message || 'Registration failed'}</span>`;
+    }
+  } catch (err) {
+    msg.innerHTML = '<span class="msg-error">✗ Cannot reach server</span>';
+    console.error('Signup error:', err);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Create Account';
+  }
+});
+</script>
+</body>
+</html>
