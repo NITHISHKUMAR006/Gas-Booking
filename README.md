@@ -42,7 +42,7 @@
 | :---- | :------- | :--------- |
 | 👑 Admin | `admin`  | `admin123` |
 | 👔 Staff | `staff`  | `staff123` |
-| 👤 Member | _sign up yourself_ | — |
+| 👤 Member | _sign up yourself_ | _sign up yourself_ |
 
 </div>
 
