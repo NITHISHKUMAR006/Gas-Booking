@@ -3,7 +3,7 @@
 #  Multi-stage optimized build — Python 3.11 slim
 # ─────────────────────────────────────────────────────────────────────────────
 
-FROM python:3.11-slim AS base
+FROM python:3.11-slim
 
 # System deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
