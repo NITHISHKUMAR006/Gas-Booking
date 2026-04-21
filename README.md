@@ -47,7 +47,7 @@ To run GasBook natively on your machine, you must have [Docker](https://www.dock
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/NITHISHKUMAR006/Gas-Booking.git gasbook
+   git clone https://github.com/NITHISHKUMAR006/Gas-Booking-System gasbook
    cd gasbook
    ```
 
@@ -87,7 +87,7 @@ If you prefer to run the Flask application directly on your machine without Dock
 ## 📂 Project Structure
 
 ```text
-📁 gasbook/
+📁 Gas-Booking-System/
 ├── 📁 src/
 │   ├── index.html        # Login Page
 │   ├── dashboard.html    # Core Application Dashboard
