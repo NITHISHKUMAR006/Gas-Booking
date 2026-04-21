@@ -1,4 +1,4 @@
-# 🔥 GasBook
+# 🔥 Gas Booking System
 
 <div align="center">
 
@@ -237,10 +237,14 @@ docker --version
 docker-compose --version
 # Expected output: Docker Compose version 2.0+
 ```
+</details>
 
 ---
 
 ## 🚀 Quick Start
+
+<details>
+  <summary><strong>View All Quick Start  <kbd>Click Here</kbd></strong></summary>
 
 GasBook can run in **three flexible ways** — pick what suits your environment.
 
@@ -255,8 +259,6 @@ GasBook can run in **three flexible ways** — pick what suits your environment.
 </div>
 
 ---
-
-<details>
   
 ### 🐳 Option A — Docker Compose (Easiest)
 
@@ -277,7 +279,7 @@ http://localhost:5002
 > ✅ Auto-creates the database, seeds tables via `init.sql`, and starts Flask on **port 5002**.
 
 <details>
-<summary><b>Docker Compose - Useful commands:</b></summary>
+<summary><b>Docker Compose - Useful Commands</b></summary>
 
 ```bash
 docker-compose logs -f app      # Live app logs
@@ -289,7 +291,6 @@ docker-compose restart app      # Restart only the app
 ```
 </details>
 
-</details>
 ---
 
 ### 🧱 Option B — Manual Docker Build & Run
@@ -545,7 +546,7 @@ $env:FLASK_PORT=8080; python app.py
 ## 🔌 API Endpoints
 
 <details>
-  <summary><strong>View All Routes  <kbd>Click Here</kbd></strong></summary>
+  <summary><strong>View All API Endpoints & Routes  <kbd>Click Here</kbd></strong></summary>
 
 | Method  | Endpoint                        | Purpose                  |
 | :------ | :------------------------------ | :----------------------- |
@@ -616,15 +617,9 @@ Released under the **MIT License** — free to use, modify, and distribute.
 <div align="center">
 
 ### ⭐ If GasBook helped you, consider starring the repo!
+<br>
+Built with ❤️ by <b><a href="https://github.com/NITHISHKUMAR006">Nithishkumar S</a> 🔥</b>
 
-<p align="center">Built with ❤️ by <b><a href="https://github.com/NITHISHKUMAR006">Nithishkumar S</a> 🔥</b></p>
-
-<p align="center">Powered by Flask & MySQL</p>
-
-<p align="center">
-  <a href="#">
-    <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,20,24&height=100&section=footer" />
-  </a>
-</p>
+<a href="#"><img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,20,24&height=100&section=footer"/></a>
 
 </div>
