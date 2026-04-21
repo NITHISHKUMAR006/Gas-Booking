@@ -2,11 +2,16 @@
 
 <div align="center">
 
-![GasBook Banner](https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,20,24&height=220&section=header&text=GasBook&fontSize=80&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Modern%20LPG%20Cylinder%20Management%20System&descAlignY=60&descSize=18)
+<p align="center">
+  <a href="https://github.com/NITHISHKUMAR006/Gas-Booking-System">
+    <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,20,24&height=220&section=header&text=GasBook&fontSize=80&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Modern%20LPG%20Cylinder%20Management%20System&descAlignY=60&descSize=18" />
+  </a>
+</p>
 
 <p align="center">
   <em>A sleek, full-stack platform to streamline LPG distribution — from booking to doorstep delivery.</em>
 </p>
+
 
 <p align="center">
   <a href="https://gas.nithishkps.workers.dev">
@@ -21,7 +26,6 @@
   <img src="https://img.shields.io/badge/Docker-Compose-1F77D2?style=plastic&logo=docker&logoColor=white" />
   <img src="https://img.shields.io/badge/License-MIT-00D9FF?style=plastic" />
 </p>
-
 
 </div>
 
@@ -45,49 +49,41 @@
 
 ## ✨ Features
 
-<table style="background-color: #ffffff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+<table>
 <tr>
-<td width="50%" valign="top" style="background-color: #ffffff; padding: 20px; border-radius: 8px;">
+<td width="50%" valign="top">
 
 ### 🎨 **Modern Interface**
-<span style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; display: block;">
 - Gemini-inspired clean layout
 - Fluid **Day / Night** theme toggle
 - Collapsible 3-dot sidebar
 - Top-right profile dropdown
 - Fully responsive across devices
 - CSS variable-driven theming
-</span>
 
 ### 👥 **Customer Management**
-<span style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; display: block;">
 - Full CRUD with live validation
 - Auto-generated customer IDs
 - Loyalty tracking (bookings & spend)
 - Search by name, phone, or ID
 - Click-to-view detail modal
-</span>
 
 </td>
-<td width="50%" valign="top" style="background-color: #ffffff; padding: 20px; border-radius: 8px;">
+<td width="50%" valign="top">
 
 ### 📦 **Booking & Delivery**
-<span style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; display: block;">
 - Create cylinder orders in seconds
 - Assign delivery personnel
 - Status pipeline: `Pending → Confirmed → Out → Delivered`
 - Auto-calculated pricing
 - **PDF Invoice** download & print
-</span>
 
 ### 📊 **Smart Analytics**
-<span style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; display: block;">
 - Real-time dashboard metrics
 - Monthly revenue trends
 - Low-stock warnings
 - 1-click inventory restock
 - Interactive sortable tables
-</span>
 
 </td>
 </tr>
@@ -97,10 +93,7 @@
 
 ## 🛠️ Tech Stack
 
-<div align="center" style="background-color: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-
-<table style="background-color: #ffffff;">
-<tr style="background-color: #f9f9f9;">
+<div align="center">
 
 | Layer        | Technology                                                   |
 | :----------- | :----------------------------------------------------------- |
@@ -110,28 +103,21 @@
 | **DevOps**   | Docker · Docker Compose · Gunicorn-ready                     |
 | **Extras**   | jsPDF · html2canvas · python-dotenv                          |
 
-</tr>
-</table>
-
 </div>
 
 ---
 
 ## 🚀 Quick Start
 
-<div align="center" style="background-color: #ffffff; padding: 25px; border-radius: 12px; margin: 20px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-
 GasBook can run in **three flexible ways** — pick what suits your environment.
 
-<div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; display: inline-block;">
+<div align="center">
 
 | Method | Best For | Setup Time |
 | :----- | :------- | :--------: |
 | 🐳 **Docker Compose** | Production / Quick demo | ~30 sec |
 | 🧱 **Manual Docker** | Custom port / DB control | ~2 min |
 | 🐍 **Local Python** | Active development | ~5 min |
-
-</div>
 
 </div>
 
@@ -411,109 +397,83 @@ $env:FLASK_PORT=8080; python app.py
 
 ## 🔌 API Endpoints
 
-<div align="center">
-
 <details>
-<summary><b>🚀 Click to expand all routes</b></summary>
+<summary><b>📚 View all routes</b></summary>
 
-```
-╔══════════════════════════════════════════════════════════╗
-║            🔌 COMPLETE REST API REFERENCE                ║
-╠══════════════════════════════════════════════════════════╣
-║ AUTH ENDPOINTS                                           ║
-├─ POST   /api/login               → Authenticate         ║
-├─ POST   /api/register            → Create Account       ║
-├─ POST   /api/logout              → End Session          ║
-║                                                          ║
-║ PROFILE ENDPOINTS                                        ║
-├─ GET    /api/profile             → Fetch Profile        ║
-├─ PUT    /api/profile             → Update Profile       ║
-║                                                          ║
-║ CUSTOMER MANAGEMENT                                      ║
-├─ GET    /api/customers           → List All             ║
-├─ POST   /api/customers           → Create New           ║
-├─ PUT    /api/customers/<id>      → Update               ║
-├─ DELETE /api/customers/<id>      → Delete               ║
-║                                                          ║
-║ BOOKING SYSTEM                                           ║
-├─ GET    /api/bookings            → View All             ║
-├─ POST   /api/bookings            → Create Order         ║
-├─ PUT    /api/bookings/<id>/status → Update Status       ║
-║                                                          ║
-║ INVENTORY & ANALYTICS                                    ║
-├─ GET    /api/inventory           → Stock Levels         ║
-├─ POST   /api/inventory/restock   → Add Stock            ║
-├─ GET    /api/analytics/dashboard → Metrics              ║
-├─ GET    /api/health              → Server Status        ║
-╚══════════════════════════════════════════════════════════╝
-```
+| Method  | Endpoint                        | Purpose                  |
+| :------ | :------------------------------ | :----------------------- |
+| `POST`  | `/api/login`                    | Authenticate user        |
+| `POST`  | `/api/register`                 | Create customer account  |
+| `POST`  | `/api/logout`                   | End session              |
+| `GET`   | `/api/profile`                  | Fetch logged-in profile  |
+| `PUT`   | `/api/profile`                  | Update profile           |
+| `GET`   | `/api/customers`                | List customers           |
+| `POST`  | `/api/customers`                | Add customer             |
+| `PUT`   | `/api/customers/<id>`           | Update customer          |
+| `DELETE`| `/api/customers/<id>`           | Delete customer          |
+| `GET`   | `/api/bookings`                 | List bookings            |
+| `POST`  | `/api/bookings`                 | Create booking           |
+| `PUT`   | `/api/bookings/<id>/status`     | Update booking status    |
+| `GET`   | `/api/inventory`                | View stock levels        |
+| `POST`  | `/api/inventory/restock`        | Add stock                |
+| `GET`   | `/api/analytics/dashboard`      | Dashboard metrics        |
+| `GET`   | `/api/health`                   | Server health check      |
 
 </details>
-
-</div>
 
 ---
 
 ## 🧠 Self-Healing Database
 
-```
-GasBook automatically:
-  ✓ Verifies database schema on startup
-  ✓ Creates tables if missing via init.sql
-  ✓ Migrates legacy database structures
-  ✓ Relinks orphaned user records
-  ✓ Maintains data integrity
+GasBook ships with intelligent recovery logic. On every startup, `app.py`:
 
-→ Result: Zero manual database setup needed!
-```
+1. 🔍 Verifies the `users` table exists
+2. 🔧 Auto-runs `init.sql` if tables are missing
+3. 🔄 Migrates legacy schemas (adds `customer/member` role support, `customer_id` column)
+4. 🔗 Relinks orphaned user-customer records
+
+> **Result:** No manual DB setup required — even across container rebuilds.
 
 ---
 
 ## 🤝 Contributing
 
-<div align="center">
+Contributions make open-source thrive! 🌱
 
 ```bash
-# 🔗 Fork → Clone → Create Branch
-
+# 1. Fork the repo
+# 2. Create your feature branch
 git checkout -b feature/amazing-feature
-git commit -m "✨ Add amazing feature"
-git push origin feature/amazing-feature
 
-# → Open Pull Request
+# 3. Commit your changes
+git commit -m "✨ Add amazing feature"
+
+# 4. Push & open a PR
+git push origin feature/amazing-feature
 ```
 
-[🐛 Found a bug?](https://github.com/NITHISHKUMAR006/Gas-Booking-System/issues)
-
-</div>
+Found a bug? [**Open an issue →**](https://github.com/NITHISHKUMAR006/Gas-Booking-System/issues)
 
 ---
 
 ## 📄 License
 
-<div align="center">
-
-```
-MIT License © 2025
-
-Free to use, modify, and distribute!
-```
-
-</div>
+Released under the **MIT License** — free to use, modify, and distribute.
 
 ---
 
 <div align="center">
 
-### 🌟 Show your support by starring this repo!
+### ⭐ If GasBook helped you, consider starring the repo!
 
-```
-╔════════════════════════════════════════════════════════╗
-║  Built with 🔥 by NITHISHKUMAR006                     ║
-║  Powered by: Python · Flask · MySQL · Docker          ║
-╚════════════════════════════════════════════════════════╝
-```
+<p align="center">Built with 🔥 by <a href="https://github.com/NITHISHKUMAR006">NITHISHKUMAR S</a></p>
 
-![Footer](https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,20,24&height=100&section=footer)
+<p align="center">Powered by Flask & MySQL</p>
+
+<p align="center">
+  <a href="#">
+    <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,20,24&height=100&section=footer" />
+  </a>
+</p>
 
 </div>
