@@ -49,6 +49,9 @@
 
 ## ✨ Features
 
+<details>
+  <summary><strong>View All Highlights  <kbd>Click Here</kbd></strong></summary>
+
 <div align="center">
 
 <table>
@@ -92,10 +95,14 @@
 </table>
 
 </div>
+</details>
 
 ---
 
 ## 🛠️ Tech Stack
+
+<details>
+  <summary><strong>View All Tech Stack  <kbd>Click Here</kbd></strong></summary>
 
 <div align="center">
 
@@ -108,13 +115,14 @@
 | **Extras**   | jsPDF · html2canvas · python-dotenv                          |
 
 </div>
+</details>
 
 ---
 
 ## ⚙️ Prerequisites & Installation
 
 <details>
-  <summary><strong>View All Installation  <kbd>Click Here</kbd></strong></summary>
+  <summary><strong>View All Installation & Installation  <kbd>Click Here</kbd></strong></summary>
 
 
 Before you start, make sure you have the required tools installed. Choose your operating system below:
@@ -496,6 +504,9 @@ $env:FLASK_PORT=8080; python app.py
 
 ## 🔌 Port Reference
 
+<details>
+  <summary><strong>View All Port Reference  <kbd>Click Here</kbd></strong></summary>
+
 <div align="center">
 
 | Service       | Internal Port | External (Host) Port | Purpose                |
@@ -506,10 +517,14 @@ $env:FLASK_PORT=8080; python app.py
 </div>
 
 > 💡 To avoid conflicts with existing services, change the **host port** in `docker-compose.yml`, the `-p` flag, or `config.env`.
+</details>
 
 ---
 
 ## 📂 Project Structure
+
+<details>
+  <summary><strong>View All Project Structure  <kbd>Click Here</kbd></strong></summary>
 
 ```text
 📦 Gas-Booking-System/
@@ -523,13 +538,14 @@ $env:FLASK_PORT=8080; python app.py
 ├── 📦 Dockerfile              # Python image build
 └── 📋 requirements.txt        # Python dependencies
 ```
+</details>
 
 ---
 
 ## 🔌 API Endpoints
 
 <details>
-<summary><b>📚 View all routes</b></summary>
+  <summary><strong>View All Routes  <kbd>Click Here</kbd></strong></summary>
 
 | Method  | Endpoint                        | Purpose                  |
 | :------ | :------------------------------ | :----------------------- |
@@ -556,6 +572,9 @@ $env:FLASK_PORT=8080; python app.py
 
 ## 🧠 Self-Healing Database
 
+<details>
+  <summary><strong>View All Self-Healing Database  <kbd>Click Here</kbd></strong></summary>
+
 GasBook ships with intelligent recovery logic. On every startup, `app.py`:
 
 1. 🔍 Verifies the `users` table exists
@@ -564,6 +583,7 @@ GasBook ships with intelligent recovery logic. On every startup, `app.py`:
 4. 🔗 Relinks orphaned user-customer records
 
 > **Result:** No manual DB setup required — even across container rebuilds.
+</details>
 
 ---
 
