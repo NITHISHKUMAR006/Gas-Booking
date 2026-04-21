@@ -1,6 +1,5 @@
 """
-GasBook Backend  |  Flask + MySQL
-File: app.py  (self-contained — config.py merged in)
+Gas Booking System - Backend  |  Flask + MySQL
 """
 
 from flask import Flask, request, jsonify, session, render_template_string, send_from_directory, redirect
@@ -23,8 +22,8 @@ def _bool(val: str, default: bool = False) -> bool:
 
 _cors_raw = os.environ.get(
     'CORS_ORIGINS',
-    'http://localhost:5002,http://127.0.0.1:5002,http://localhost:3000,'
-    'http://127.0.0.1:3000,http://localhost:5500,null'
+    'http://localhost:5002, http://127.0.0.1:5002, http://localhost:3000,'
+    'http://127.0.0.1:3000, http://localhost:5500, null'
 )
 
 class Config:
