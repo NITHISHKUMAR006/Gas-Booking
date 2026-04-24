@@ -2,6 +2,7 @@
 #  Gas Booking System  |  docker-compose.yml
 #  Services: app (Flask) + db (MySQL 8)
 #  External access: http://localhost:5002
+#  MySQL page: http://localhost:5002/mysql
 # ─────────────────────────────────────────────────────────────────────────────
 
 
@@ -12,28 +13,44 @@ services:
     image: "mysql:8.0"
     container_name: "gasbook_db"
     restart: "unless-stopped"
-    environment:
-      MYSQL_ROOT_PASSWORD : "rootpassword"
-      MYSQL_DATABASE      : "gasbook"
-      MYSQL_USER          : "gasbook_user"
-      MYSQL_PASSWORD      : "gasbook_pass"
-      TZ                  : "Asia/Kolkata"
+    env_file:
+      - config.env
     command:
       - "--default-time-zone=+05:30"
       - "--default-authentication-plugin=caching_sha2_password"
     volumes:
-      - "gasbook_mysql_data:/var/lib/mysql"
       - "./src/init.sql:/docker-entrypoint-initdb.d/init.sql:ro"
     ports:
-      - "3306:3306"
+      - "127.0.0.1:${MYSQL_PORT:-3306}:${MYSQL_PORT:-3306}"
     networks:
       - gasbook_net
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
+
+  # ── phpMyAdmin (internal only, proxied by Flask at /mysql) ────────────────
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: gasbook_phpmyadmin
+    restart: unless-stopped
+    env_file:
+      - config.env
+    environment:
+      PMA_HOST     : "db"
+      PMA_USER     : "${MYSQL_USER:-gasbook_user}"
+      PMA_PASSWORD : "${MYSQL_PASSWORD:-gasbook_pass}"
+      PMA_PORT     : "${MYSQL_PORT:-3306}"
+      UPLOAD_LIMIT : "104857600"
+      PHP_UPLOAD_MAX_FILESIZE: "100M"
+      PHP_POST_MAX_SIZE: "100M"
+      PMA_ABSOLUTE_URI: /mysql/
+    depends_on:
+      - db
+    networks:
+      - gasbook_net
 
   # ── Flask Application ──────────────────────────────────────────────────────
   app:
@@ -45,25 +62,19 @@ services:
     env_file:
       - config.env
     environment:
-      MYSQL_HOST : "db"
-      MYSQL_PORT : "3306"
-      FLASK_PORT : "5002"
-      TZ         : "Asia/Kolkata" 
+      - TZ=${TIMEZONE:-Asia/Kolkata}
     ports:
-      - "5002:5002" 
+      - "${FLASK_PORT:-5002}:${FLASK_PORT:-5002}" 
     depends_on:
       db:
         condition: service_healthy
+      phpmyadmin:
+        condition: service_started
     networks:
       - gasbook_net
     volumes:
       - .:/app
     command: python app.py
-
-# ── Volumes ───────────────────────────────────────────────────────────────────
-volumes:
-  gasbook_mysql_data:
-    driver: local
 
 # ── Networks ──────────────────────────────────────────────────────────────────
 networks:

@@ -771,21 +771,26 @@
   <div class="particles" id="particles"></div>
 
   <button class="theme-toggle" id="themeToggle" title="Toggle theme" onclick="toggleTheme()">
+    <!-- Sun icon: modern bold rays -->
     <svg class="sun-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="4" fill="currentColor" fill-opacity="0.35" />
-      <path d="M12 2v2" />
-      <path d="M12 20v2" />
-      <path d="m4.93 4.93 1.41 1.41" />
-      <path d="m17.66 17.66 1.41 1.41" />
-      <path d="M2 12h2" />
-      <path d="M20 12h2" />
-      <path d="m6.34 17.66-1.41 1.41" />
-      <path d="m19.07 4.93-1.41 1.41" />
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="4.5" fill="currentColor" fill-opacity="0.25" />
+      <line x1="12" y1="2" x2="12" y2="4.5" />
+      <line x1="12" y1="19.5" x2="12" y2="22" />
+      <line x1="2" y1="12" x2="4.5" y2="12" />
+      <line x1="19.5" y1="12" x2="22" y2="12" />
+      <line x1="5.64" y1="5.64" x2="7.41" y2="7.41" />
+      <line x1="16.59" y1="16.59" x2="18.36" y2="18.36" />
+      <line x1="5.64" y1="18.36" x2="7.41" y2="16.59" />
+      <line x1="16.59" y1="7.41" x2="18.36" y2="5.64" />
     </svg>
+    <!-- Moon icon: modern crescent with star sparkles -->
     <svg class="moon-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor" fill-opacity="0.2" />
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor" fill-opacity="0.18" />
+      <circle cx="17" cy="4" r="0.9" fill="currentColor" stroke="none" />
+      <circle cx="20" cy="7.5" r="0.6" fill="currentColor" stroke="none" />
+      <circle cx="19.5" cy="2.5" r="0.5" fill="currentColor" stroke="none" />
     </svg>
   </button>
 
@@ -884,7 +889,7 @@
           <label>Email *</label>
           <div class="input-wrap">
             <input type="email" id="s-email" placeholder="Enter your email" required autocomplete="email"
-              oninput="this.value = this.value.replace(/[^a-zA-Z0-9@._-]/g, '')">
+              oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9@._-]/g, '')">
             <span class="ico">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
@@ -989,6 +994,10 @@
       const saved = localStorage.getItem('gasbook_theme') || 'dark';
       document.documentElement.dataset.theme = saved;
     })();
+
+    if (localStorage.getItem('gasbook_user') && !window.location.search.includes('logout')) {
+       window.location.href = '/dashboard';
+    }
 
     function togglePwd() {
       const inp = document.getElementById('password');

@@ -12,17 +12,18 @@ CREATE TABLE IF NOT EXISTS users (
     user_id   INT          AUTO_INCREMENT PRIMARY KEY,
     username  VARCHAR(50)  NOT NULL UNIQUE,
     password  VARCHAR(255) NOT NULL,
-    role      ENUM('admin','staff','member') NOT NULL DEFAULT 'staff',
+    role      ENUM('admin','staff','customer') NOT NULL DEFAULT 'staff',
     status    ENUM('active','inactive') NOT NULL DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 INSERT IGNORE INTO users (username, password, role) VALUES
     ('admin', 'admin123', 'admin'),
-    ('staff', 'staff123', 'staff');
+    ('staff', 'staff123', 'staff'),
+    ('customer', 'customer123', 'customer');
 
--- ── CylinderTypes ──────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS cylindertypes (
+-- ── cylinder_types ──────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS cylinder_types (
     type_id   INT          AUTO_INCREMENT PRIMARY KEY,
     type_name VARCHAR(100) NOT NULL,
     weight    DECIMAL(5,2) NOT NULL,
@@ -30,20 +31,20 @@ CREATE TABLE IF NOT EXISTS cylindertypes (
     is_active TINYINT(1)  DEFAULT 1
 );
 
-INSERT IGNORE INTO cylindertypes (type_name, weight, price) VALUES
+INSERT IGNORE INTO cylinder_types (type_name, weight, price) VALUES
     ('14.2 kg Domestic', 14.2, 903.00),
     ('19 kg Commercial', 19.0, 1850.00),
     ('5 kg FTL',          5.0,  500.00);
 
--- ── Warehouses ─────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS warehouses (
+-- ── ware_houses ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS ware_houses (
     warehouse_id INT         AUTO_INCREMENT PRIMARY KEY,
     name         VARCHAR(100) NOT NULL,
     location     VARCHAR(255),
     capacity     INT DEFAULT 1000
 );
 
-INSERT IGNORE INTO warehouses (name, location) VALUES
+INSERT IGNORE INTO ware_houses (name, location) VALUES
     ('Main Warehouse', 'Central Depot'),
     ('North Hub',      'North Zone');
 
@@ -56,20 +57,20 @@ CREATE TABLE IF NOT EXISTS customers (
     address        TEXT,
     aadhar_no      VARCHAR(20),
     status         ENUM('active','inactive') DEFAULT 'active',
-    member_since   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    customer_since   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     total_bookings INT DEFAULT 0,
     total_spent    DECIMAL(12,2) DEFAULT 0.00
 );
 
--- ── DeliveryBoys ───────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS deliveryboys (
+-- ── delivery_boys ───────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS delivery_boys (
     boy_id  INT          AUTO_INCREMENT PRIMARY KEY,
     name    VARCHAR(100) NOT NULL,
     phone   VARCHAR(15),
     status  ENUM('active','inactive') DEFAULT 'active'
 );
 
-INSERT IGNORE INTO deliveryboys (name, phone) VALUES
+INSERT IGNORE INTO delivery_boys (name, phone) VALUES
     ('Ravi Kumar',  '9876500001'),
     ('Suresh Singh','9876500002');
 
@@ -82,8 +83,8 @@ CREATE TABLE IF NOT EXISTS inventory (
     reorder_level    INT DEFAULT 50,
     last_restocked   TIMESTAMP NULL,
     UNIQUE KEY uq_inv (type_id, warehouse_id),
-    FOREIGN KEY (type_id)      REFERENCES cylindertypes(type_id),
-    FOREIGN KEY (warehouse_id) REFERENCES warehouses(warehouse_id)
+    FOREIGN KEY (type_id)      REFERENCES cylinder_types(type_id),
+    FOREIGN KEY (warehouse_id) REFERENCES ware_houses(warehouse_id)
 );
 
 INSERT IGNORE INTO inventory (type_id, warehouse_id, quantity_on_hand) VALUES
@@ -102,6 +103,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     status         ENUM('pending','confirmed','out_for_delivery','delivered','cancelled') DEFAULT 'pending',
     delivery_boy_id INT NULL,
     FOREIGN KEY (customer_id)    REFERENCES customers(customer_id),
-    FOREIGN KEY (type_id)        REFERENCES cylindertypes(type_id),
-    FOREIGN KEY (delivery_boy_id) REFERENCES deliveryboys(boy_id)
+    FOREIGN KEY (type_id)        REFERENCES cylinder_types(type_id),
+    FOREIGN KEY (delivery_boy_id) REFERENCES delivery_boys(boy_id)
 );
+
