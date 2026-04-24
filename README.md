@@ -54,7 +54,7 @@
 
 🔑 **MySQL Direct Login:** `admin` / `admin123`
 
-> ⚡ **Seamless Access:** Admins logged into the dashboard can open the MySQL panel directly—no second login needed.
+> ⚡ **Seamless Access:** Admins logged into the dashboard can open the MySQL panel no need log in again.
 
 
 </div>
