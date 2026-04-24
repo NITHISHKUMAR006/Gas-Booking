@@ -41,7 +41,7 @@
 | :---- | :------- | :--------- |
 | 👑 Admin | `admin`  | `admin123` |
 | 👔 Staff | `staff`  | `staff123` |
-| 👤 Member | _sign up yourself_ | _sign up yourself_ |
+| 👤 Customer | _sign up yourself_ | _sign up yourself_ |
 
 </div>
 
@@ -580,7 +580,7 @@ GasBook ships with intelligent recovery logic. On every startup, `app.py`:
 
 1. 🔍 Verifies the `users` table exists
 2. 🔧 Auto-runs `init.sql` if tables are missing
-3. 🔄 Migrates legacy schemas (adds `customer/member` role support, `customer_id` column)
+3. 🔄 Migrates legacy schemas (adds `customer` role support, `customer_id` column)
 4. 🔗 Relinks orphaned user-customer records
 
 > **Result:** No manual DB setup required — even across container rebuilds.
