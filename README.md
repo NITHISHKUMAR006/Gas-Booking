@@ -33,15 +33,29 @@
 
 ## 🌐 Live Preview
 
-> **Try it now →** **[gas.nithishkps.workers.dev](https://gas.nithishkps.workers.dev)**
-
 <div align="center">
+
+> ### **Try it now:** <br> 
+
+### **1. [Gas-Booking-System] → https://gas.nithishkps.workers.dev**
+
 
 | Role  | Username | Password   |
 | :---- | :------- | :--------- |
 | 👑 Admin | `admin`  | `admin123` |
 | 👔 Staff | `staff`  | `staff123` |
-| 👤 Customer | _sign up yourself_ | _sign up yourself_ |
+| 👤 Customer | `customer` | `customer123` |
+
+> 💡 [Sign Up](https://gas.nithishkps.workers.dev/signup) is also fully functional for new customers.
+
+<br>
+
+### **2. [MySQL-Admin] → https://gas.nithishkps.workers.dev/mysql**
+
+🔑 **MySQL Direct Login:** `admin` / `admin123`
+
+> ⚡ **Seamless Access:** Admins logged into the dashboard can open the MySQL panel directly—no second login needed.
+
 
 </div>
 
@@ -71,6 +85,8 @@
 - Auto-generated customer IDs
 - Loyalty tracking (bookings & spend)
 - Search by name, phone, or ID
+- Real-time **Aadhaar** formatting (`XXXX-XXXX-XXXX`)
+- 10-digit **Mobile Number** enforcement
 - Click-to-view detail modal
 
 </td>
@@ -88,6 +104,7 @@
 - Monthly revenue trends
 - Low-stock warnings
 - 1-click inventory restock
+- **Integrated MySQL Admin** (proxied at `/mysql`)
 - Interactive sortable tables
 
 </td>
@@ -290,6 +307,18 @@ docker-compose down -v          # Stop + wipe DB volume
 docker-compose restart app      # Restart only the app
 ```
 </details>
+
+---
+
+### ⚡ Live Reloading (Development)
+
+GasBook supports **hot-reloading** for both backend and frontend code:
+1.  **Backend (`app.py`)**: Ensure `DEBUG=True` is set in `config.env`. Any changes to the Python code will trigger an automatic server restart inside the container.
+2.  **Frontend (`src/`)**: Since the container mounts the current directory as a volume, any changes to `index.html` or `dashboard.html` will be reflected immediately upon refreshing the browser.
+3.  **Logs**: Monitor changes and debug errors in real-time with:
+    ```bash
+    docker-compose logs -f app
+    ```
 
 ---
 
@@ -513,8 +542,9 @@ $env:FLASK_PORT=8080; python app.py
 | Service       | Internal Port | External (Host) Port | Purpose                |
 | :------------ | :-----------: | :------------------: | :--------------------- |
 | 🐍 Flask App  | `5002`        | `5002`               | Web UI + REST API      |
-| 🗄️ MySQL DB   | `3306`        | `3306`               | Database access        |
-
+| 🗄️ MySQL DB   | `3306`        | **Internal Only**    | Database access        |
+| 🌐 MySQL Admin| `80` (int)    | `/mysql` (proxied)   | Admin-Only Access      |
+2
 </div>
 
 > 💡 To avoid conflicts with existing services, change the **host port** in `docker-compose.yml`, the `-p` flag, or `config.env`.
