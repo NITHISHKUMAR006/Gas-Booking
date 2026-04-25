@@ -38,7 +38,14 @@ services:
     restart: unless-stopped
     env_file:
       - config.env
+    entrypoint: >
+      bash -c '
+      echo "LogFormat \"[%{%d-%m-%Y %I:%M %p}t] %h - \\\"%r\\\" %>s\" simple" > /etc/apache2/conf-enabled/z-logs.conf &&
+      echo "CustomLog /proc/self/fd/1 simple" >> /etc/apache2/conf-enabled/z-logs.conf &&
+      echo "ErrorLog /proc/self/fd/2" >> /etc/apache2/conf-enabled/z-logs.conf &&
+      /docker-entrypoint.sh apache2-foreground'
     environment:
+      TZ           : "Asia/Kolkata"
       PMA_HOST     : "db"
       PMA_USER     : "${MYSQL_USER:-gasbook_user}"
       PMA_PASSWORD : "${MYSQL_PASSWORD:-gasbook_pass}"

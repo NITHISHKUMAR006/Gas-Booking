@@ -122,6 +122,40 @@
       display: block;
     }
 
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      z-index: 10000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      transition: all 0.3s;
+    }
+
+    .loading-overlay.show {
+      display: flex;
+    }
+
+    .loader-spin {
+      width: 48px;
+      height: 48px;
+      border: 4px solid rgba(255, 107, 43, 0.1);
+      border-top-color: var(--flame);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
     .sidebar {
       width: 260px;
       background: var(--surf);
@@ -3309,6 +3343,11 @@
 
   <div class="toast" id="toast"></div>
 
+  <div class="loading-overlay" id="full-loader">
+    <div class="loader-spin"></div>
+    <div id="loader-text" style="font-family:'Outfit';font-weight:600;letter-spacing:1px;text-transform:uppercase;font-size:14px;">Resetting System...</div>
+  </div>
+
   <script>
     // ── Avatar helper: shows initial letter when user name is known,
     //    otherwise reverts to the SVG person silhouette ──────────────────────
@@ -3527,7 +3566,7 @@
         toast('Only admins can access MySQL.', 'warn');
         return;
       }
-      window.location.href = '/mysql';
+      window.open('/mysql', '_blank');
     }
 
     document.addEventListener('click', function (event) {
@@ -3548,9 +3587,14 @@
     }
     else {
       const u = JSON.parse(stored);
-      document.getElementById('user-name').textContent = u.username;
-      document.getElementById('user-role').textContent = u.role;
-      document.getElementById('user-avatar').textContent = u.username[0].toUpperCase();
+      if (u.full_name && u.full_name.trim()) {
+        document.getElementById('user-name').textContent = u.full_name;
+        document.getElementById('user-role').textContent = u.username;
+      } else {
+        document.getElementById('user-name').textContent = u.username;
+        document.getElementById('user-role').textContent = '';
+      }
+      document.getElementById('user-avatar').textContent = (u.full_name || u.username)[0].toUpperCase();
       if (!['admin', 'staff'].includes(u.role)) {
         // customers: add CSS class to body — hides all checkboxes and bulk bars via CSS
         document.body.classList.add('customer-role');
@@ -4365,6 +4409,21 @@
       if (ok === false) el.classList.add('err-input');
     }
 
+    function handleNameInput(el) {
+      const cursor = el.selectionStart;
+      const oldVal = el.value;
+      // Allow only letters and spaces
+      const cleaned = oldVal.replace(/[^a-zA-Z\s]/g, '');
+      // Title Case: Capitalize first letter of each word, preserve others
+      const formatted = cleaned.split(' ').map(w => w ? w.charAt(0).toUpperCase() + w.slice(1) : '').join(' ');
+
+      if (oldVal !== formatted) {
+        el.value = formatted;
+        const diff = oldVal.length - formatted.length;
+        el.setSelectionRange(Math.max(0, cursor - diff), Math.max(0, cursor - diff));
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       // ── Helper: check duplicates against cached customer list ──────────
       function checkDup(field, dupId, value, getExisting) {
@@ -4384,8 +4443,11 @@
       }
 
       document.getElementById('c-name').addEventListener('input', function () {
-        let val = this.value.replace(/[^A-Za-z\s]/g, '');
-        this.value = val.split(' ').map(w => w ? w.charAt(0).toUpperCase() + w.slice(1) : '').join(' ');
+        handleNameInput(this);
+      });
+
+      document.getElementById('u-name').addEventListener('input', function () {
+        handleNameInput(this);
       });
 
       document.getElementById('c-phone').addEventListener('input', function () {
@@ -5379,6 +5441,9 @@
           const el = document.getElementById(id);
           el.removeEventListener('input', checkChanges); // Avoid duplicate listeners
           el.addEventListener('input', checkChanges);
+          if (id === 's-name') {
+            el.addEventListener('input', function () { handleNameInput(this); });
+          }
         });
 
         document.getElementById('s-email').addEventListener('input', function () {
@@ -5580,25 +5645,23 @@
     async function resetDatabase() {
       if (!confirm('CRITICAL WARNING: This will RESET DEFAULT settings and PERMANENTLY DELETE all bookings, customers, and data. Only initial accounts will remain. Are you absolutely sure?')) return;
 
-      const btn = event.currentTarget;
-      const origText = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = 'Resetting...';
+      const loader = document.getElementById('full-loader');
+      const loaderText = document.getElementById('loader-text');
+      if (loader) loader.classList.add('show');
 
       try {
         const d = await apiFetch('/admin/reset-db', { method: 'POST' });
         if (d.success) {
+          if (loaderText) loaderText.textContent = 'Reset Successful! Reloading...';
           toast(d.message, 'success');
-          setTimeout(() => window.location.reload(), 2000);
+          setTimeout(() => window.location.reload(), 1500);
         } else {
+          if (loader) loader.classList.remove('show');
           toast(d.message || 'Reset failed', 'error');
-          btn.disabled = false;
-          btn.innerHTML = origText;
         }
       } catch (e) {
+        if (loader) loader.classList.remove('show');
         toast('Network error during reset', 'error');
-        btn.disabled = false;
-        btn.innerHTML = origText;
       }
     }
 

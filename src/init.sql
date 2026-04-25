@@ -14,15 +14,18 @@ CREATE TABLE IF NOT EXISTS users (
     password    VARCHAR(255) NOT NULL,
     role        ENUM('admin','staff','customer') NOT NULL DEFAULT 'staff',
     status      ENUM('active','inactive') NOT NULL DEFAULT 'active',
+    full_name   VARCHAR(100) NULL,
+    email       VARCHAR(100) NULL,
+    phone       VARCHAR(15)  NULL,
     customer_id VARCHAR(20)  NULL,
     created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Default Accounts
-INSERT IGNORE INTO users (username, password, role, customer_id) VALUES
-    ('admin',    'admin123',    'admin',    NULL),
-    ('staff',    'staff123',    'staff',    NULL),
-    ('customer', 'customer123', 'customer', 'CUST0001');
+INSERT IGNORE INTO users (username, password, full_name, role, customer_id) VALUES
+    ('admin',    'admin123',    'Primary Admin',    'admin',    NULL),
+    ('staff',    'staff123',    'Primary Staff',    'staff',    NULL),
+    ('customer', 'customer123', 'Demo Customer',    'customer', 'CUST0001');
 
 -- ── cylinder_types ──────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS cylinder_types (
@@ -65,12 +68,8 @@ CREATE TABLE IF NOT EXISTS customers (
     total_spent    DECIMAL(12,2) DEFAULT 0.00
 );
 
--- Default Customer Profile
-INSERT IGNORE INTO customers (customer_id, name, phone, email, address, source) VALUES
-    ('CUST0001', 'Demo Customer', NULL, NULL, NULL, 'signup');
-
-
--- ── delivery_boys ───────────────────────────────────────────────────────────
+INSERT IGNORE INTO customers (customer_id, name, source) VALUES
+    ('CUST0001', 'Demo Customer', 'signup');
 
 -- ── delivery_boys ───────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS delivery_boys (
@@ -117,3 +116,57 @@ CREATE TABLE IF NOT EXISTS bookings (
     FOREIGN KEY (delivery_boy_id) REFERENCES delivery_boys(boy_id)
 );
 
+-- ── DB PROTECTIONS (TRIGGERS) ────────────────────────────────────────────────
+-- Prevent deletion of default system accounts
+DROP TRIGGER IF EXISTS trg_protect_default_users_delete;
+DELIMITER //
+CREATE TRIGGER trg_protect_default_users_delete
+BEFORE DELETE ON users
+FOR EACH ROW
+BEGIN
+    IF OLD.username IN ('admin', 'staff', 'customer') THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'CRITICAL: Deletion of default system accounts is blocked.';
+    END IF;
+END; //
+DELIMITER ;
+
+-- Prevent role or status changes for default system accounts
+DROP TRIGGER IF EXISTS trg_protect_default_users_role;
+DELIMITER //
+CREATE TRIGGER trg_protect_default_users_role
+BEFORE UPDATE ON users
+FOR EACH ROW
+BEGIN
+    IF OLD.username IN ('admin', 'staff', 'customer') THEN
+        IF NEW.role <> OLD.role OR NEW.status <> OLD.status THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'CRITICAL: Modification of default account role or status is blocked.';
+        END IF;
+    END IF;
+END; //
+DELIMITER ;
+
+-- Prevent deletion or status change of default customer profile
+DROP TRIGGER IF EXISTS trg_protect_default_customer_update;
+DELIMITER //
+CREATE TRIGGER trg_protect_default_customer_update
+BEFORE UPDATE ON customers
+FOR EACH ROW
+BEGIN
+    IF OLD.customer_id = 'CUST0001' AND NEW.status <> OLD.status THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'CRITICAL: Modification of default customer status is blocked.';
+    END IF;
+END; //
+DELIMITER ;
+
+-- Prevent deletion of default customer profile
+DROP TRIGGER IF EXISTS trg_protect_default_customer_delete;
+DELIMITER //
+CREATE TRIGGER trg_protect_default_customer_delete
+BEFORE DELETE ON customers
+FOR EACH ROW
+BEGIN
+    IF OLD.customer_id = 'CUST0001' THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'CRITICAL: Deletion of default customer profile is blocked.';
+    END IF;
+END; //
+DELIMITER ;

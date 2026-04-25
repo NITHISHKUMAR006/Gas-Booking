@@ -67,11 +67,12 @@ class ISTFormatter(logging.Formatter):
 
     def formatTime(self, record, datefmt=None):
         dt = datetime.fromtimestamp(record.created, tz=self._tz)
-        return dt.strftime(datefmt or '%d %b %Y %I:%M:%S %p')
+        # India format: 25-04-2026 06:13 PM
+        return dt.strftime(datefmt or '%d-%m-%Y %I:%M %p')
 
     def format(self, record):
         record.asctime = self.formatTime(record)
-        return f"[{record.asctime}] [{record.levelname}] {record.getMessage()}"
+        return f"[{record.asctime}] {record.getMessage()}"
 
 class WerkzeugISTFormatter(ISTFormatter):
     """Same IST formatter but strips Werkzeug's embedded UTC bracket timestamp."""
@@ -79,17 +80,143 @@ class WerkzeugISTFormatter(ISTFormatter):
         record.asctime = self.formatTime(record)
         import re
         msg = record.getMessage()
-        # Remove Werkzeug's own [dd/Mon/yyyy hh:mm:ss] bracket so only IST time shows
+        # Remove Werkzeug's embedded [dd/Mon/yyyy hh:mm:ss]
         msg = re.sub(r'\[[\d]{2}/\w+/[\d]{4} [\d:]+\] ', '', msg)
-        # Clean up double dashes and trailing dashes in the access log
+        # Convert " - - " to " - " more robustly
         msg = re.sub(r'\s+-\s+-\s+', ' - ', msg)
+        # Remove trailing dash (e.g., "200 -")
         msg = re.sub(r'\s+-\s*$', '', msg)
-        return f"[{record.asctime}] [{record.levelname}] {msg}"
+        # Return simpler format: [Time] message
+        return f"[{record.asctime}] {msg}"
 
 _handler = logging.StreamHandler()
 _handler.setFormatter(ISTFormatter())
 logging.root.setLevel(logging.INFO)
 logging.root.handlers = [_handler]
+
+# ── SECURITY MIDDLEWARE ───────────────────────────────────────────────────────
+_IP_TRACKER = {}
+_TRACKER_LOCK = threading.Lock()
+
+@app.before_request
+def security_gateway():
+    """Anti-DDoS, Rate Limiting, and Injection Protection"""
+    # Whitelist /mysql for admins (so they can run SQL queries without being blocked by the filter)
+    if request.path.startswith('/mysql') and session.get('role') == 'admin':
+        return
+
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    now = time.time()
+    
+    # 1. Rate Limiting (Anti-DDoS)
+    with _TRACKER_LOCK:
+        if ip not in _IP_TRACKER:
+            _IP_TRACKER[ip] = []
+        
+        # Keep only last 60 seconds of history
+        _IP_TRACKER[ip] = [t for t in _IP_TRACKER[ip] if now - t < 60]
+        
+        # Max 100 requests per minute per IP
+        if len(_IP_TRACKER[ip]) > 100:
+            logger.warning(f"Rate limit triggered for IP: {ip}")
+            return jsonify({'success': False, 'message': 'Too many requests. Please try again later.'}), 429
+        
+        _IP_TRACKER[ip].append(now)
+
+    # 2. Malicious Content Filtering (SQLi, XSS, Path Traversal, and Hacking Tools)
+    # Scan Path, Query String, and Body for malicious signatures
+    payload = (request.path + request.query_string.decode() + (request.get_data(as_text=True) or '')).lower()
+    
+    malicious_patterns = [
+        # Injection & Exploits
+        'etc/passwd', 'proc/self', '.env', 'eval(', 'union select', 'select * from',
+        'insert into', 'delete from', 'drop table', 'truncate ', 'sleep(', 'benchmark(',
+        '<script', 'javascript:', 'onload=', 'onerror=', 'base64_', 'hex(',
+        # Shell & Remote Execution
+        'shell_exec', 'system(', 'passthru', 'popen', 'curl ', 'wget ', 'chmod ',
+        'chown ', 'rm -rf', 'python ', 'perl ', 'bash ', 'sh ', 'nc ', 'netcat',
+        # File & Path Protection
+        '../', '..\\', '%2e%2e', 'config.env', 'app.py', 'init.sql', '.git', '.docker',
+        'wp-admin', 'setup.php', 'config.php', 'id_rsa', 'authorized_keys'
+    ]
+    
+    for pattern in malicious_patterns:
+        if pattern in payload:
+            logger.critical(f"HACKING ATTEMPT BLOCKED: IP={ip} | Target={request.path} | Pattern={pattern}")
+            # Log full details for forensic analysis
+            logger.debug(f"Offending Payload: {payload[:500]}")
+            return jsonify({'success': False, 'message': 'Security violation detected. Your IP has been logged.'}), 403
+
+_LAST_DB_REPAIR = 0
+
+def perform_db_repair():
+    """Logic to check and restore database schema and default accounts"""
+    try:
+        conn = get_db()
+        if conn:
+            cur = conn.cursor()
+            
+            # 1. Check for missing tables (Structural Healing)
+            required_tables = ['users', 'customers', 'cylinder_types', 'ware_houses', 'inventory', 'bookings', 'delivery_boys']
+            cur.execute("SHOW TABLES")
+            existing_tables = [r[0] for r in cur.fetchall()]
+            
+            missing_any = any(t not in existing_tables for t in required_tables)
+            if missing_any:
+                logger.warning("CRITICAL: Missing database tables detected! Triggering Structural Healing...")
+                # We need to run initialize_database logic here
+                cur.close(); conn.close()
+                initialize_database() # This will recreate all tables from init.sql
+                return # initialize_database already handles account recreation
+
+            # 2. Restore CUST0001 Profile
+            cur.execute("SELECT customer_id FROM customers WHERE customer_id = 'CUST0001'")
+            if not cur.fetchone():
+                cur.execute("INSERT IGNORE INTO customers (customer_id, name, source, status) VALUES ('CUST0001', 'Customer', 'signup', 'active')")
+            else:
+                cur.execute("UPDATE customers SET status = 'active' WHERE customer_id = 'CUST0001' AND status != 'active'")
+
+            # 2. Restore User Accounts (admin, staff, customer)
+            for u, p, n, r, cid in [
+                ('admin',    'admin123',    'Primary Admin',    'admin',    None), 
+                ('staff',    'staff123',    'Primary Staff',    'staff',    None), 
+                ('customer', 'customer123', 'Demo Customer',    'customer', 'CUST0001')
+            ]:
+                cur.execute("SELECT user_id, password, role, status, full_name FROM users WHERE username = %s", (u,))
+                row = cur.fetchone()
+                if not row:
+                    cur.execute("INSERT IGNORE INTO users (username, password, full_name, role, customer_id, status) VALUES (%s, %s, %s, %s, %s, 'active')", (u, p, n, r, cid))
+                else:
+                    # Repair if values changed
+                    if row[1] != p or row[2] != r or row[3] != 'active' or row[4] != n:
+                        cur.execute("UPDATE users SET password = %s, role = %s, status = 'active', full_name = %s WHERE username = %s", (p, r, n, u))
+            
+            # 3. Restore CUST0001 Profile
+            cur.execute("SELECT customer_id FROM customers WHERE customer_id = 'CUST0001'")
+            if not cur.fetchone():
+                cur.execute("INSERT IGNORE INTO customers (customer_id, name, source, status) VALUES (%s, %s, %s, %s)", ('CUST0001', 'Demo Customer', 'signup', 'active'))
+            else:
+                cur.execute("UPDATE customers SET status = 'active', name = 'Demo Customer' WHERE customer_id = 'CUST0001' AND (status != 'active' OR name != 'Demo Customer')")
+    except Exception as e:
+        logger.debug(f"DB Repair background error: {e}")
+
+@app.before_request
+def realtime_db_repair():
+    """Run recovery every 5 seconds for 'instant' healing experience"""
+    global _LAST_DB_REPAIR
+    now = time.time()
+    if now - _LAST_DB_REPAIR > 5:
+        _LAST_DB_REPAIR = now
+        perform_db_repair()
+
+@app.after_request
+def security_headers(response):
+    """Inject browser security headers"""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    return response
 
 # Apply IST formatter to werkzeug so HTTP access logs show Indian time only
 _wz_logger = logging.getLogger('werkzeug')
@@ -1823,19 +1950,21 @@ def ensure_customer_role():
         cur.execute("SELECT customer_id FROM users WHERE user_id = %s", (user_id,))
         cid = cur.fetchone()['customer_id']
         if not cid:
-            # Generate next CUST ID
-            cur.execute('SELECT COUNT(*) AS c FROM customers')
-            count = cur.fetchone()['c'] + 1
-            cid = f'CUST{count:04d}'
-            cur.execute('SELECT customer_id FROM customers WHERE customer_id=%s', (cid,))
-            while cur.fetchone():
-                count += 1
+            # Check if CUST0001 is available for the default user
+            cur.execute("SELECT customer_id FROM customers WHERE customer_id = 'CUST0001'")
+            if not cur.fetchone():
+                cid = 'CUST0001'
+            else:
+                # Generate next CUST ID (starting from 2)
+                cur.execute('SELECT COUNT(*) AS c FROM customers')
+                count = max(2, cur.fetchone()['c'] + 1)
                 cid = f'CUST{count:04d}'
                 cur.execute('SELECT customer_id FROM customers WHERE customer_id=%s', (cid,))
+                while cur.fetchone():
+                    count += 1
+                    cid = f'CUST{count:04d}'
+                    cur.execute('SELECT customer_id FROM customers WHERE customer_id=%s', (cid,))
             
-            # Create profile
-            cur.execute("INSERT INTO customers (customer_id, name, email, status, source) VALUES (%s, %s, %s, %s, %s)",
-                       (cid, 'Default Customer', 'customer@example.com', 'active', 'signup'))
             # Link to user
             cur.execute("UPDATE users SET customer_id = %s WHERE user_id = %s", (cid, user_id))
             conn.commit()
@@ -1922,7 +2051,7 @@ def login():
     try:
         cur = conn.cursor(dictionary=True)
         cur.execute(
-            'SELECT users.user_id, users.username, users.role, customers.email AS c_email, '
+            'SELECT users.user_id, users.username, users.role, users.full_name, customers.email AS c_email, '
             'COALESCE(users.customer_id, customers.customer_id) AS c_id FROM users '
             'LEFT JOIN customers ON customers.customer_id = users.customer_id OR customers.email = %s OR customers.email = users.username '
             'WHERE (users.username=%s OR customers.email=%s) AND users.password=%s '
@@ -1934,16 +2063,18 @@ def login():
 
         if user:
             session.permanent = True
-            session['user_id']  = user['user_id']
-            session['username'] = user['username']
-            session['role']     = user['role']
-            session['c_email']  = user['c_email']
-            session['c_id']     = user['c_id']
+            session['user_id']   = user['user_id']
+            session['username']  = user['username']
+            session['full_name'] = user['full_name']
+            session['role']      = user['role']
+            session['c_email']   = user['c_email']
+            session['c_id']      = user['c_id']
             _log_audit(user['user_id'], user['username'], 'login', 'success')
             return jsonify({
                 'success':  True,
                 'user_id':  user['user_id'],
                 'username': user['username'],
+                'full_name': user['full_name'],
                 'c_id':     user['c_id'],
                 'role':     user['role'],
                 'message':  'Login successful'
@@ -2046,7 +2177,7 @@ def register():
         user_id = cur.lastrowid
 
         cur.execute('SELECT COUNT(*) AS c FROM customers')
-        count = cur.fetchone()['c'] + 1
+        count = max(2, cur.fetchone()['c'] + 1)
         cid = f'CUST{count:04d}'
         cur.execute('SELECT customer_id FROM customers WHERE customer_id=%s', (cid,))
         while cur.fetchone():
@@ -2191,7 +2322,7 @@ def create_user_full():
 
         # Create customer profile for all roles
         cur.execute('SELECT COUNT(*) AS c FROM customers')
-        count = cur.fetchone()['c'] + 1
+        count = max(2, cur.fetchone()['c'] + 1)
         cid = f'CUST{count:04d}'
         cur.execute('SELECT customer_id FROM customers WHERE customer_id=%s', (cid,))
         while cur.fetchone():
@@ -2284,17 +2415,23 @@ def update_user_api(uid):
     if not conn: return db_error()
     try:
         cur = conn.cursor(dictionary=True)
-        cur.execute('SELECT customer_id FROM users WHERE user_id=%s', (uid,))
+        cur.execute('SELECT username, role, customer_id FROM users WHERE user_id=%s', (uid,))
         usr = cur.fetchone()
         if not usr:
             cur.close(); conn.close()
             return jsonify({'success': False, 'message': 'User not found'}), 404
         
+        # Block role or status change for default accounts
+        if usr['username'] in ('admin', 'staff', 'customer'):
+            if (new_role and new_role != usr['role']) or (status and status != usr.get('status', 'active')):
+                cur.close(); conn.close()
+                return jsonify({'success': False, 'message': 'Cannot change role or status of default system accounts'}), 400
+            
         cid = usr['customer_id']
 
         # Update user table with profile fields
         up_u = "UPDATE users SET role=%s, status=%s, full_name=%s, email=%s, phone=%s WHERE user_id=%s"
-        cur.execute(up_u, (new_role, status, format_name(name) if name else None, email or None, phone or None, uid))
+        cur.execute(up_u, (new_role or usr['role'], status, format_name(name) if name else None, email or None, phone or None, uid))
         
         conn.commit(); cur.close(); conn.close()
         return jsonify({'success': True, 'message': 'Account updated successfully'})
@@ -2314,11 +2451,15 @@ def delete_user_api(uid):
     if not conn: return db_error()
     try:
         cur = conn.cursor(dictionary=True)
-        cur.execute('SELECT customer_id FROM users WHERE user_id=%s', (uid,))
+        cur.execute('SELECT username, customer_id FROM users WHERE user_id=%s', (uid,))
         usr = cur.fetchone()
         if not usr:
             cur.close(); conn.close()
             return jsonify({'success': False, 'message': 'User not found'}), 404
+        
+        if usr['username'] in ('admin', 'staff', 'customer'):
+            cur.close(); conn.close()
+            return jsonify({'success': False, 'message': 'Cannot delete default system accounts'}), 400
         
         cid = usr['customer_id']
 
@@ -2443,7 +2584,7 @@ def update_profile():
         # If no customer row exists, auto-create one
         if not cust_id:
             cur.execute('SELECT COUNT(*) AS c FROM customers')
-            count = cur.fetchone()['c'] + 1
+            count = max(2, cur.fetchone()['c'] + 1)
             cust_id = f'CUST{count:04d}'
             cur.execute('SELECT customer_id FROM customers WHERE customer_id=%s', (cust_id,))
             while cur.fetchone():
@@ -2592,7 +2733,7 @@ def create_customer():
 
         # ── Generate unique ID ────────────────────────────────────────
         cur.execute('SELECT COUNT(*) as c FROM customers')
-        count = cur.fetchone()['c'] + 1
+        count = max(2, cur.fetchone()['c'] + 1)
         cid = f'CUST{count:04d}'
         cur.execute('SELECT customer_id FROM customers WHERE customer_id=%s', (cid,))
         while cur.fetchone():
@@ -2677,6 +2818,9 @@ def update_customer(customer_id):
 def delete_customer(customer_id):
     if session.get('role') not in ('admin', 'staff'):
         return jsonify({'success': False, 'message': 'Admin/Staff access required'}), 403
+    if customer_id == 'CUST0001':
+        return jsonify({'success': False, 'message': 'Cannot delete default demo customer'}), 400
+
     conn = get_db()
     if not conn: return db_error()
     try:
@@ -3203,15 +3347,29 @@ def initialize_database():
             if os.path.exists(init_file):
                 with open(init_file, 'r', encoding='utf-8') as f:
                     sql_script = f.read()
-                statements = [s.strip() + ';' for s in sql_script.split(';') if s.strip()]
-                for statement in statements:
-                    try:
-                        cur.execute(statement)
-                    except Error as e:
-                        if 'already exists' not in str(e).lower() and 'duplicate entry' not in str(e).lower():
-                            logger.error(f"Init query failed: {e}")
-                conn.commit()
-                logger.info("DB initialized.")
+                
+                import re
+                # Strip DELIMITER lines (they are CLI-only)
+                sql_script = re.sub(r'(?i)DELIMITER\s+\S+', '', sql_script)
+                # Replace the custom delimiter // with ; so it can be executed
+                sql_script = sql_script.replace('//', ';')
+                
+                # Execute as a multi-statement script
+                try:
+                    for result in cur.execute(sql_script, multi=True):
+                        # Consume results to ensure execution
+                        if result.with_rows:
+                            result.fetchall()
+                    conn.commit()
+                    logger.info("DB initialized with triggers.")
+                except Error as e:
+                    logger.error(f"Init script failed: {e}")
+                    # Fallback to line-by-line if multi fails (for older connectors)
+                    statements = [s.strip() + ';' for s in sql_script.split(';') if s.strip()]
+                    for statement in statements:
+                        try: cur.execute(statement)
+                        except: pass
+                    conn.commit()
         
         # Patch schema for new users to allow NULL name and phone
         try:
@@ -3238,6 +3396,31 @@ def initialize_database():
             conn.commit()
         except Error:
             pass # ignore if already altered
+
+        # ── Ensure Default Customer Profile Exists ──
+        cur.execute("SELECT customer_id FROM customers WHERE customer_id = 'CUST0001'")
+        if not cur.fetchone():
+            cur.execute(
+                "INSERT INTO customers (customer_id, name, source) VALUES (%s, %s, %s)",
+                ('CUST0001', 'Demo Customer', 'signup')
+            )
+            logger.info("Recreated default customer profile: CUST0001")
+
+        # ── Ensure Default User Accounts Exist ──
+        defaults = [
+            ('admin',    'admin123',    'Primary Admin',    'admin',    None),
+            ('staff',    'staff123',    'Primary Staff',    'staff',    None),
+            ('customer', 'customer123', 'Demo Customer',    'customer', 'CUST0001')
+        ]
+        for u, p, n, r, cid in defaults:
+            cur.execute("SELECT user_id FROM users WHERE username = %s", (u,))
+            if not cur.fetchone():
+                cur.execute(
+                    "INSERT INTO users (username, password, full_name, role, customer_id) VALUES (%s, %s, %s, %s, %s)",
+                    (u, p, n, r, cid)
+                )
+                logger.info(f"Recreated default user account: {u}")
+        conn.commit()
 
         # Remove audit_log table by requirement.
         try:
