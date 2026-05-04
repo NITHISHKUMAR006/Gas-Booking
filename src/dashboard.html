@@ -5857,6 +5857,7 @@
 
     function logout() {
       stopLivePolling();
+      fetch(API + '/mysql-logout', { method: 'POST', credentials: 'include' }).catch(() => {});
       fetch(API + '/logout', { method: 'POST', credentials: 'include' })
         .then(() => {
           localStorage.removeItem('gasbook_user');

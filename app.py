@@ -2168,7 +2168,12 @@ def login():
 @app.route('/logout', methods=['GET'])
 def logout_get():
     session.clear()
-    return redirect('/')
+    resp = redirect('/')
+    for cookie_name in request.cookies.keys():
+        if cookie_name.lower().startswith('pma'):
+            resp.delete_cookie(cookie_name, path='/')
+            resp.delete_cookie(cookie_name, path='/mysql')
+    return resp
 
 @app.route('/api/logout', methods=['POST'])
 def logout():
@@ -2176,7 +2181,12 @@ def logout():
     username = session.get('username', 'unknown')
     _log_audit(user_id, username, 'logout', 'success')
     session.clear()
-    return jsonify({'success': True, 'message': 'Logged out'})
+    resp = jsonify({'success': True, 'message': 'Logged out'})
+    for cookie_name in request.cookies.keys():
+        if cookie_name.lower().startswith('pma'):
+            resp.delete_cookie(cookie_name, path='/')
+            resp.delete_cookie(cookie_name, path='/mysql')
+    return resp
 
 @app.route('/api/check-availability', methods=['POST'])
 def check_availability():

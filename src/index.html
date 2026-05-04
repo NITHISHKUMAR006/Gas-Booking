@@ -889,7 +889,7 @@
           <label>Email *</label>
           <div class="input-wrap">
             <input type="email" id="s-email" placeholder="Enter your email" required autocomplete="email"
-              oninput="(function(el){ var i=el.value.indexOf('@'); el.value = i!==-1 ? (el.value.slice(0,i+1)+el.value.slice(i+1).replace(/@/g,'')).toLowerCase() : el.value.toLowerCase(); })(this)">
+              oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9@._-]/g, ''); var i=this.value.indexOf('@'); if(i!==-1) this.value = this.value.slice(0,i+1)+this.value.slice(i+1).replace(/@/g,'')">
             <span class="ico">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
@@ -1233,32 +1233,53 @@
           this.value = this.value.slice(0, atIdx + 1) + this.value.slice(atIdx + 1).replace(/@/g, '');
         }
         this.value = this.value.toLowerCase();
+        const errEl = document.getElementById('serr-email');
+
+        if (this.value.length === 0) {
+          this.classList.remove('input-error', 'ok-input');
+          errEl.classList.remove('show');
+          clearTimeout(emailTimer);
+          return;
+        }
+
         const atCount = (this.value.match(/@/g) || []).length;
         const ok = atCount === 1 && /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(this.value);
-        const errEl = document.getElementById('serr-email');
-        this.classList.remove('input-error');
-        errEl.textContent = 'Enter a valid email address';
-        errEl.classList.toggle('show', this.value.length > 0 && !ok);
+        errEl.textContent = atCount > 1 ? 'Only one @ is allowed (e.g. example@domain.com)' : 'Enter a valid email (e.g. example@domain.com)';
+
+        if (!ok) {
+          this.classList.add('input-error');
+          this.classList.remove('ok-input');
+          errEl.classList.add('show');
+          clearTimeout(emailTimer);
+          return;
+        }
+
+        this.classList.remove('input-error', 'ok-input');
+        errEl.classList.remove('show');
 
         clearTimeout(emailTimer);
-        if (ok) {
-          emailTimer = setTimeout(async () => {
-            try {
-              const res = await fetch(`${API}/check-availability`, {
-                method: 'POST', body: JSON.stringify({ field: 'email', value: this.value })
-              });
-              const data = await res.json();
-              if (!data.available) {
-                this.classList.add('input-error');
-                errEl.textContent = 'This email is already registered';
-                errEl.classList.add('show');
-              } else {
-                this.classList.remove('input-error');
-                errEl.classList.remove('show');
-              }
-            } catch (e) { }
-          }, 500);
-        }
+        emailTimer = setTimeout(async () => {
+          try {
+            const res = await fetch(`${API}/check-availability`, {
+              method: 'POST', body: JSON.stringify({ field: 'email', value: this.value })
+            });
+            const data = await res.json();
+            if (!data.available) {
+              this.classList.add('input-error');
+              this.classList.remove('ok-input');
+              errEl.textContent = 'This email is already registered';
+              errEl.classList.add('show');
+            } else {
+              this.classList.remove('input-error');
+              this.classList.add('ok-input');
+              errEl.classList.remove('show');
+            }
+          } catch (e) {
+            this.classList.remove('input-error');
+            this.classList.add('ok-input');
+            errEl.classList.remove('show');
+          }
+        }, 500);
       });
 
       document.getElementById('s-password').addEventListener('input', function () {
@@ -1361,7 +1382,7 @@
       if (!uname || !/^[a-zA-Z0-9_]{3,20}$/.test(uname)) {
         msg.innerHTML = '<span class="msg-error">✗ Username must be 3–20 characters (letters, numbers, _)</span>'; return;
       }
-      if (!email || (email.match(/@/g)||[]).length !== 1 || !/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(email)) {
+      if (!email || !/^[a-z0-9._-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(email)) {
         msg.innerHTML = '<span class="msg-error">✗ Enter a valid email address</span>'; return;
       }
       if (pwd.length < 8) {
