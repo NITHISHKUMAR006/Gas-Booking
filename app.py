@@ -290,6 +290,7 @@ def _mysql_cache_set(key: str, status_code: int, headers, body: bytes):
             'body': body,
         }
 
+
 # ── Web Status Page ───────────────────────────────────────────────────────────
 STATUS_PAGE = """<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"/><title>GasBook API</title>
