@@ -3609,15 +3609,12 @@
       if (btn && dropdown && !btn.contains(event.target) && !dropdown.contains(event.target)) {
         dropdown.classList.remove('show');
       }
-    }); 
+    });
 
     const stored = localStorage.getItem('gasbook_user');
     if (!stored) {
-      const currentPath = window.location.pathname;
-      const currentSearch = window.location.search;
-      const fullPath = currentPath + currentSearch;
-      if (currentPath !== '/' && !currentPath.startsWith('/mysql-login')) {
-        window.location.href = '/?redirect=' + encodeURIComponent(fullPath);
+      if (window.location.pathname !== '/') {
+        window.location.href = '/?redirect=' + window.location.pathname;
       } else {
         window.location.href = '/';
       }
@@ -5858,66 +5855,8 @@
       }
     }
 
-    // Cross-tab logout synchronization using BroadcastChannel (with localStorage fallback)
-    const logoutChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('gasbook_logout') : null;
-    let logoutCheckInterval = null;
-
-    function broadcastLogout() {
-      const logoutData = {
-        timestamp: Date.now(),
-        source: window.location.pathname + window.location.search
-      };
-      if (logoutChannel) {
-        logoutChannel.postMessage(logoutData);
-      }
-      // Fallback: also set localStorage to trigger storage event in other tabs
-      try {
-        localStorage.setItem('gasbook_logout_trigger', JSON.stringify(logoutData));
-        localStorage.removeItem('gasbook_logout_trigger');
-      } catch (e) {}
-    }
-
-    function handleCrossTabLogout(sourcePath) {
-      stopLivePolling();
-      localStorage.removeItem('gasbook_user');
-      // Determine login URL based on current path
-      const currentPath = window.location.pathname;
-      const currentSearch = window.location.search;
-      const fullPath = currentPath + currentSearch;
-      let loginUrl;
-      if (currentPath.startsWith('/mysql')) {
-        loginUrl = '/mysql-login?redirect=' + encodeURIComponent(fullPath);
-      } else {
-        loginUrl = '/?redirect=' + encodeURIComponent(fullPath);
-      }
-      window.location.href = loginUrl;
-    }
-
-    function initCrossTabLogoutListener() {
-      // BroadcastChannel listener (modern browsers)
-      if (logoutChannel) {
-        logoutChannel.onmessage = function(e) {
-          if (e.data && e.data.timestamp) {
-            handleCrossTabLogout(e.data.source);
-          }
-        };
-      }
-      // localStorage fallback (works in all browsers)
-      window.addEventListener('storage', function(e) {
-        if (e.key === 'gasbook_logout_trigger' && e.newValue) {
-          try {
-            const data = JSON.parse(e.newValue);
-            if (data && data.timestamp) {
-              handleCrossTabLogout(data.source);
-            }
-          } catch (err) {}
-        }
-      });
-    }
-
     function logout() {
       stopLivePolling();
-      broadcastLogout();
       fetch(API + '/mysql-logout', { method: 'POST', credentials: 'include' }).catch(() => {});
       fetch(API + '/logout', { method: 'POST', credentials: 'include' })
         .then(() => {
@@ -5929,9 +5868,6 @@
           window.location.href = '/';
         });
     }
-
-    // Initialize cross-tab logout listener
-    initCrossTabLogoutListener();
 
     // ── Bulk: Export CSV ────────────────────────────────────────────────
     function exportCSV(tableId, filename) {
