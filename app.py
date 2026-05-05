@@ -1789,7 +1789,48 @@ MYSQL_LOGIN_PAGE = """<!DOCTYPE html>
         errorMsg.textContent = '❌ Network error: ' + err.message;
         errorMsg.classList.add('show', 'error');
       }
+    } 
+
+    // Cross-tab logout synchronization using BroadcastChannel (with localStorage fallback)
+    const logoutChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('gasbook_logout') : null;
+
+    function handleCrossTabLogout(sourcePath) {
+      localStorage.removeItem('gasbook_user');
+      // If already on mysql-login page, just update UI state
+      const currentPath = window.location.pathname;
+      if (currentPath === '/mysql-login') {
+        return; // Already on MySQL login page
+      }
+      // Otherwise redirect to mysql-login with current path as redirect
+      const currentSearch = window.location.search;
+      const fullPath = currentPath + currentSearch;
+      window.location.href = '/mysql-login?redirect=' + encodeURIComponent(fullPath);
     }
+
+    function initCrossTabLogoutListener() {
+      // BroadcastChannel listener (modern browsers)
+      if (logoutChannel) {
+        logoutChannel.onmessage = function(e) {
+          if (e.data && e.data.timestamp) {
+            handleCrossTabLogout(e.data.source);
+          }
+        };
+      }
+      // localStorage fallback (works in all browsers)
+      window.addEventListener('storage', function(e) {
+        if (e.key === 'gasbook_logout_trigger' && e.newValue) {
+          try {
+            const data = JSON.parse(e.newValue);
+            if (data && data.timestamp) {
+              handleCrossTabLogout(data.source);
+            }
+          } catch (err) {}
+        }
+      });
+    }
+
+    // Initialize cross-tab logout listener
+    initCrossTabLogoutListener();
   </script>
 </body>
 </html>"""
